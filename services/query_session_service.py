@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 
 from fastapi import HTTPException
 
-from models.user import (
-    User
+from models.upload_session import (
+    UploadSession
 )
 
 from models.query_session import (
@@ -11,8 +11,7 @@ from models.query_session import (
 )
 
 from schemas.query_session import (
-    QuerySessionCreate,
-    QuerySessionUpdate
+    QuerySessionCreate
 )
 
 
@@ -32,25 +31,23 @@ class QuerySessionService:
         Create query session.
         """
 
-        user = db.query(
-            User
+        upload_session = db.query(
+            UploadSession
         ).filter(
-            User.user_id
+            UploadSession.session_id
             ==
-            payload.user_id
+            payload.upload_session_id
         ).first()
 
-        if not user:
+        if not upload_session:
 
             raise HTTPException(
                 404,
-                "User not found"
+                "Upload session not found"
             )
 
         session = QuerySession(
-
             **payload.model_dump()
-
         )
 
         db.add(
@@ -70,9 +67,6 @@ class QuerySessionService:
     def get_sessions(
         db: Session
     ):
-        """
-        Fetch sessions.
-        """
 
         return db.query(
             QuerySession
@@ -84,14 +78,11 @@ class QuerySessionService:
         session_id,
         db: Session
     ):
-        """
-        Fetch session.
-        """
 
         session = db.query(
             QuerySession
         ).filter(
-            QuerySession.session_id
+            QuerySession.query_session_id
             ==
             session_id
         ).first()
@@ -100,39 +91,8 @@ class QuerySessionService:
 
             raise HTTPException(
                 404,
-                "Session not found"
+                "Query session not found"
             )
-
-        return session
-
-
-    @staticmethod
-    def update_session(
-        session,
-        payload: QuerySessionUpdate,
-        db: Session
-    ):
-        """
-        Update session.
-        """
-
-        updates = payload.model_dump(
-            exclude_unset=True
-        )
-
-        for key, value in updates.items():
-
-            setattr(
-                session,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            session
-        )
 
         return session
 
@@ -142,9 +102,6 @@ class QuerySessionService:
         session,
         db: Session
     ):
-        """
-        Delete session.
-        """
 
         db.delete(
             session

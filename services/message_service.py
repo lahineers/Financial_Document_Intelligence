@@ -11,15 +11,13 @@ from models.message import (
 )
 
 from schemas.message import (
-    MessageCreate,
-    MessageUpdate
+    MessageCreate
 )
 
 
 class MessageService:
     """
-    Handles message
-    business logic.
+    Handles message business logic.
     """
 
 
@@ -48,9 +46,7 @@ class MessageService:
             )
 
         message = Message(
-
             **payload.model_dump()
-
         )
 
         db.add(
@@ -70,9 +66,6 @@ class MessageService:
     def get_messages(
         db: Session
     ):
-        """
-        Fetch messages.
-        """
 
         return db.query(
             Message
@@ -84,9 +77,6 @@ class MessageService:
         message_id,
         db: Session
     ):
-        """
-        Fetch message.
-        """
 
         message = db.query(
             Message
@@ -107,44 +97,10 @@ class MessageService:
 
 
     @staticmethod
-    def update_message(
-        message,
-        payload: MessageUpdate,
-        db: Session
-    ):
-        """
-        Update message.
-        """
-
-        updates = payload.model_dump(
-            exclude_unset=True
-        )
-
-        for key, value in updates.items():
-
-            setattr(
-                message,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            message
-        )
-
-        return message
-
-
-    @staticmethod
     def delete_message(
         message,
         db: Session
     ):
-        """
-        Delete message.
-        """
 
         db.delete(
             message

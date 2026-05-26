@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 
 from fastapi import HTTPException
 
-from models.query_session import (
-    QuerySession
+from models.upload_session import (
+    UploadSession
 )
 
 from models.session_summary import (
@@ -11,8 +11,7 @@ from models.session_summary import (
 )
 
 from schemas.session_summary import (
-    SessionSummaryCreate,
-    SessionSummaryUpdate
+    SessionSummaryCreate
 )
 
 
@@ -29,13 +28,13 @@ class SessionSummaryService:
         db: Session
     ):
         """
-        Create summary.
+        Create session summary.
         """
 
         session = db.query(
-            QuerySession
+            UploadSession
         ).filter(
-            QuerySession.session_id
+            UploadSession.session_id
             ==
             payload.session_id
         ).first()
@@ -44,13 +43,11 @@ class SessionSummaryService:
 
             raise HTTPException(
                 404,
-                "Session not found"
+                "Upload session not found"
             )
 
         summary = SessionSummary(
-
             **payload.model_dump()
-
         )
 
         db.add(
@@ -70,9 +67,6 @@ class SessionSummaryService:
     def get_summaries(
         db: Session
     ):
-        """
-        Fetch summaries.
-        """
 
         return db.query(
             SessionSummary
@@ -84,14 +78,11 @@ class SessionSummaryService:
         summary_id,
         db: Session
     ):
-        """
-        Fetch summary.
-        """
 
         summary = db.query(
             SessionSummary
         ).filter(
-            SessionSummary.summary_id
+            SessionSummary.session_summary_id
             ==
             summary_id
         ).first()
@@ -100,39 +91,8 @@ class SessionSummaryService:
 
             raise HTTPException(
                 404,
-                "Summary not found"
+                "Session summary not found"
             )
-
-        return summary
-
-
-    @staticmethod
-    def update_summary(
-        summary,
-        payload,
-        db: Session
-    ):
-        """
-        Update summary.
-        """
-
-        updates = payload.model_dump(
-            exclude_unset=True
-        )
-
-        for key, value in updates.items():
-
-            setattr(
-                summary,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            summary
-        )
 
         return summary
 
@@ -142,9 +102,6 @@ class SessionSummaryService:
         summary,
         db: Session
     ):
-        """
-        Delete summary.
-        """
 
         db.delete(
             summary

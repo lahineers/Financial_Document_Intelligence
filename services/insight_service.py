@@ -6,20 +6,22 @@ from models.document import (
     Document
 )
 
+from models.upload_session import (
+    UploadSession
+)
+
 from models.insight import (
     Insight
 )
 
 from schemas.insight import (
-    InsightCreate,
-    InsightUpdate
+    InsightCreate
 )
 
 
 class InsightService:
     """
-    Handles insight
-    business logic.
+    Handles insight business logic.
     """
 
 
@@ -47,10 +49,23 @@ class InsightService:
                 "Document not found"
             )
 
+        session = db.query(
+            UploadSession
+        ).filter(
+            UploadSession.session_id
+            ==
+            payload.session_id
+        ).first()
+
+        if not session:
+
+            raise HTTPException(
+                404,
+                "Session not found"
+            )
+
         insight = Insight(
-
             **payload.model_dump()
-
         )
 
         db.add(
@@ -70,9 +85,6 @@ class InsightService:
     def get_insights(
         db: Session
     ):
-        """
-        Fetch insights.
-        """
 
         return db.query(
             Insight
@@ -84,9 +96,6 @@ class InsightService:
         insight_id,
         db: Session
     ):
-        """
-        Fetch insight.
-        """
 
         insight = db.query(
             Insight
@@ -107,44 +116,10 @@ class InsightService:
 
 
     @staticmethod
-    def update_insight(
-        insight,
-        payload: InsightUpdate,
-        db: Session
-    ):
-        """
-        Update insight.
-        """
-
-        updates = payload.model_dump(
-            exclude_unset=True
-        )
-
-        for key, value in updates.items():
-
-            setattr(
-                insight,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            insight
-        )
-
-        return insight
-
-
-    @staticmethod
     def delete_insight(
         insight,
         db: Session
     ):
-        """
-        Delete insight.
-        """
 
         db.delete(
             insight

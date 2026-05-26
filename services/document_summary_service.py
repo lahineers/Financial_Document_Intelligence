@@ -11,8 +11,7 @@ from models.document_summary import (
 )
 
 from schemas.document_summary import (
-    SummaryCreate,
-    SummaryUpdate
+    SummaryCreate
 )
 
 
@@ -28,9 +27,6 @@ class DocumentSummaryService:
         payload: SummaryCreate,
         db: Session
     ):
-        """
-        Create summary.
-        """
 
         document = db.query(
             Document
@@ -70,9 +66,6 @@ class DocumentSummaryService:
     def get_summaries(
         db: Session
     ):
-        """
-        Fetch summaries.
-        """
 
         return db.query(
             DocumentSummary
@@ -81,19 +74,16 @@ class DocumentSummaryService:
 
     @staticmethod
     def get_summary(
-        doc_id,
+        summary_id,
         db: Session
     ):
-        """
-        Fetch summary.
-        """
 
         summary = db.query(
             DocumentSummary
         ).filter(
-            DocumentSummary.doc_id
+            DocumentSummary.summary_id
             ==
-            doc_id
+            summary_id
         ).first()
 
         if not summary:
@@ -107,44 +97,10 @@ class DocumentSummaryService:
 
 
     @staticmethod
-    def update_summary(
-        summary,
-        payload: SummaryUpdate,
-        db: Session
-    ):
-        """
-        Update summary.
-        """
-
-        updates = payload.model_dump(
-            exclude_unset=True
-        )
-
-        for key, value in updates.items():
-
-            setattr(
-                summary,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            summary
-        )
-
-        return summary
-
-
-    @staticmethod
     def delete_summary(
         summary,
         db: Session
     ):
-        """
-        Delete summary.
-        """
 
         db.delete(
             summary

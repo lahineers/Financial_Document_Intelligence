@@ -29,6 +29,31 @@ class ChunkCreate(BaseModel):
     section_metadata: dict = {}
 
 
+class ChunkUpdate(BaseModel):
+    """
+    Schema for updating
+    document chunks.
+    """
+
+    chunk_text: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50000
+    )
+
+    chunk_index: int | None = Field(
+        default=None,
+        ge=0
+    )
+
+    page_number: int | None = Field(
+        default=None,
+        ge=1
+    )
+
+    section_metadata: dict | None = None
+
+
 class ChunkResponse(BaseModel):
     """
     Returned chunk schema.

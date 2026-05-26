@@ -7,8 +7,7 @@ from models.chunk_embedding import (
 )
 
 from schemas.chunk_embedding import (
-    ChunkEmbeddingCreate,
-    ChunkEmbeddingUpdate
+    EmbeddingCreate
 )
 
 
@@ -20,7 +19,7 @@ class ChunkEmbeddingService:
 
     @staticmethod
     def create_embedding(
-        payload: ChunkEmbeddingCreate,
+        payload: EmbeddingCreate,
         db: Session
     ):
         """
@@ -80,37 +79,6 @@ class ChunkEmbeddingService:
                 404,
                 "Embedding not found"
             )
-
-        return embedding
-
-
-    @staticmethod
-    def update_embedding(
-        embedding,
-        payload: ChunkEmbeddingUpdate,
-        db: Session
-    ):
-        """
-        Update embedding.
-        """
-
-        updates = payload.model_dump(
-            exclude_unset=True
-        )
-
-        for key, value in updates.items():
-
-            setattr(
-                embedding,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            embedding
-        )
 
         return embedding
 

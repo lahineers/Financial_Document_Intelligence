@@ -31,6 +31,10 @@ from routers.user import router as user_router
 from models.message import Message
 
 from models.document_summary import DocumentSummary
+from routers.processing_status import router as processing_router
+from routers.dashboard_metric import router as dashboard_router
+from routers.report import router as report_router
+from routers.saved_query import router as saved_query_router
 
 app = FastAPI()
 
@@ -63,6 +67,18 @@ app.include_router(
 )
 app.include_router(
     user_router
+)
+app.include_router(
+    processing_router
+)
+app.include_router(
+    dashboard_router
+)
+app.include_router(
+    report_router
+)
+app.include_router(
+    saved_query_router
 )
 
 

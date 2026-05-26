@@ -9,17 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.upload_session import (
-    UploadSession
-)
-
-from models.session_summary import (
-    SessionSummary
-)
-
 from schemas.session_summary import (
     SessionSummaryCreate,
     SessionSummaryResponse
+)
+
+from services.session_summary_service import (
+    SessionSummaryService
 )
 
 
@@ -44,49 +40,33 @@ def create_session_summary(
 
     try:
 
-        session = db.query(
-            UploadSession
-        ).filter(
-            UploadSession.session_id
-            ==
-            payload.session_id
-        ).first()
+        return (
 
-        if not session:
+            SessionSummaryService
+            .create_summary(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Upload session not found"
+                payload,
+
+                db
+
             )
 
-        summary = SessionSummary(
-            **payload.model_dump()
         )
-
-        db.add(
-            summary)
-
-        db.commit()
-
-        db.refresh(
-            summary
-        )
-
-        return summary
-
 
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -105,15 +85,25 @@ def get_session_summaries(
 
     try:
 
-        return db.query(
-            SessionSummary
-        ).all()
+        return (
+
+            SessionSummaryService
+            .get_summaries(
+
+                db
+
+            )
+
+        )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -129,22 +119,34 @@ def get_session_summary(
     Fetch session summary.
     """
 
-    summary = db.query(
-        SessionSummary
-    ).filter(
-        SessionSummary.session_summary_id
-        ==
-        session_summary_id
-    ).first()
+    try:
 
-    if not summary:
+        return (
 
-        raise HTTPException(
-            status_code=404,
-            detail="Session summary not found"
+            SessionSummaryService
+            .get_summary(
+
+                session_summary_id,
+
+                db
+
+            )
+
         )
 
-    return summary
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=str(e)
+
+        )
 
 
 @router.delete(
@@ -160,26 +162,26 @@ def delete_session_summary(
 
     try:
 
-        summary = db.query(
-            SessionSummary
-        ).filter(
-            SessionSummary.session_summary_id
-            ==
-            session_summary_id
-        ).first()
+        summary = (
 
-        if not summary:
+            SessionSummaryService
+            .get_summary(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Session summary not found"
+                session_summary_id,
+
+                db
+
             )
 
-        db.delete(
-            summary
         )
 
-        db.commit()
+        SessionSummaryService.delete_summary(
+
+            summary,
+
+            db
+
+        )
 
         return {
 
@@ -189,17 +191,18 @@ def delete_session_summary(
 
         }
 
-
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

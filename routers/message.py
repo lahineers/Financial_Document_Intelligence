@@ -9,17 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.query_session import (
-    QuerySession
-)
-
-from models.message import (
-    Message
-)
-
 from schemas.message import (
     MessageCreate,
     MessageResponse
+)
+
+from services.message_service import (
+    MessageService
 )
 
 
@@ -44,50 +40,33 @@ def create_message(
 
     try:
 
-        query_session = db.query(
-            QuerySession
-        ).filter(
-            QuerySession.query_session_id
-            ==
-            payload.query_session_id
-        ).first()
+        return (
 
-        if not query_session:
+            MessageService
+            .create_message(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Query session not found"
+                payload,
+
+                db
+
             )
 
-        message = Message(
-            **payload.model_dump()
         )
-
-        db.add(
-            message
-        )
-
-        db.commit()
-
-        db.refresh(
-            message
-        )
-
-        return message
-
 
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -106,15 +85,25 @@ def get_messages(
 
     try:
 
-        return db.query(
-            Message
-        ).all()
+        return (
+
+            MessageService
+            .get_messages(
+
+                db
+
+            )
+
+        )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -130,22 +119,34 @@ def get_message(
     Fetch message.
     """
 
-    message = db.query(
-        Message
-    ).filter(
-        Message.message_id
-        ==
-        message_id
-    ).first()
+    try:
 
-    if not message:
+        return (
 
-        raise HTTPException(
-            status_code=404,
-            detail="Message not found"
+            MessageService
+            .get_message(
+
+                message_id,
+
+                db
+
+            )
+
         )
 
-    return message
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=str(e)
+
+        )
 
 
 @router.delete(
@@ -161,26 +162,26 @@ def delete_message(
 
     try:
 
-        message = db.query(
-            Message
-        ).filter(
-            Message.message_id
-            ==
-            message_id
-        ).first()
+        message = (
 
-        if not message:
+            MessageService
+            .get_message(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Message not found"
+                message_id,
+
+                db
+
             )
 
-        db.delete(
-            message
         )
 
-        db.commit()
+        MessageService.delete_message(
+
+            message,
+
+            db
+
+        )
 
         return {
 
@@ -190,17 +191,18 @@ def delete_message(
 
         }
 
-
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

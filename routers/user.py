@@ -9,24 +9,14 @@ from uuid import UUID
 
 from db import get_db
 
-from models.user import (
-    User
-)
-
 from schemas.user import (
     UserCreate,
     UserUpdate,
     UserResponse
 )
 
-from passlib.context import (
-    CryptContext
-)
-
-
-pwd_context = CryptContext(
-    schemes=["pbkdf2_sha256"],
-    deprecated="auto"
+from services.user_service import (
+    UserService
 )
 
 
@@ -34,18 +24,6 @@ router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
-
-
-def hash_password(
-    password: str
-):
-    """
-    Hash user password.
-    """
-
-    return pwd_context.hash(
-        password
-    )
 
 
 @router.post(
@@ -63,68 +41,14 @@ def create_user(
 
     try:
 
-        existing_user = db.query(
-            User
-        ).filter(
-            User.email
-            ==
-            payload.email
-        ).first()
-
-        if existing_user:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Email already exists"
-            )
-
-        existing_username = db.query(
-            User
-        ).filter(
-            User.username
-            ==
-            payload.username
-        ).first()
-
-        if existing_username:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Username already exists"
-            )
-
-        user = User(
-
-            username=payload.username,
-
-            email=payload.email,
-
-            hashed_password=
-            hash_password(
-                payload.password
-            ),
-
-            plan=payload.plan
-
+        return UserService.create_user(
+            payload,
+            db
         )
-
-        db.add(
-            user
-        )
-
-        db.commit()
-
-        db.refresh(
-            user
-        )
-
-        return user
-
 
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
@@ -151,9 +75,9 @@ def get_users(
 
     try:
 
-        return db.query(
-            User
-        ).all()
+        return UserService.get_users(
+            db
+        )
 
     except Exception as e:
 
@@ -175,22 +99,23 @@ def get_user(
     Fetch user.
     """
 
-    user = db.query(
-        User
-    ).filter(
-        User.user_id
-        ==
-        user_id
-    ).first()
+    try:
 
-    if not user:
-
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
+        return UserService.get_user(
+            user_id,
+            db
         )
 
-    return user
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 
 @router.put(
@@ -208,46 +133,20 @@ def update_user(
 
     try:
 
-        user = db.query(
-            User
-        ).filter(
-            User.user_id
-            ==
-            user_id
-        ).first()
-
-        if not user:
-
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        updates = payload.model_dump(
-            exclude_unset=True
+        user = UserService.get_user(
+            user_id,
+            db
         )
 
-        for key, value in updates.items():
-
-            setattr(
-                user,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.refresh(
-            user
+        return UserService.update_user(
+            user,
+            payload,
+            db
         )
-
-        return user
-
 
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
@@ -272,26 +171,15 @@ def delete_user(
 
     try:
 
-        user = db.query(
-            User
-        ).filter(
-            User.user_id
-            ==
-            user_id
-        ).first()
-
-        if not user:
-
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        db.delete(
-            user
+        user = UserService.get_user(
+            user_id,
+            db
         )
 
-        db.commit()
+        UserService.delete_user(
+            user,
+            db
+        )
 
         return {
 
@@ -301,11 +189,9 @@ def delete_user(
 
         }
 
-
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 

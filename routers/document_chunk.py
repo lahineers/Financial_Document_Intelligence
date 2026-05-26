@@ -9,17 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.document import (
-    Document
-)
-
-from models.document_chunk import (
-    DocumentChunk
-)
-
 from schemas.document_chunk import (
     ChunkCreate,
     ChunkResponse
+)
+
+from services.document_chunk_service import (
+    DocumentChunkService
 )
 
 
@@ -44,36 +40,18 @@ def create_chunk(
 
     try:
 
-        document = db.query(
-            Document
-        ).filter(
-            Document.doc_id
-            ==
-            payload.doc_id
-        ).first()
+        return (
 
-        if not document:
+            DocumentChunkService
+            .create_chunk(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Document not found"
+                payload,
+
+                db
+
             )
 
-        chunk = DocumentChunk(
-            **payload.model_dump()
         )
-
-        db.add(
-            chunk
-        )
-
-        db.commit()
-
-        db.refresh(
-            chunk
-        )
-
-        return chunk
 
     except HTTPException:
 
@@ -84,8 +62,11 @@ def create_chunk(
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -99,22 +80,30 @@ def get_chunks(
     db: Session = Depends(get_db)
 ):
     """
-    Fetch all document chunks.
+    Fetch all chunks.
     """
 
     try:
 
-        chunks = db.query(
-            DocumentChunk
-        ).all()
+        return (
 
-        return chunks
+            DocumentChunkService
+            .get_chunks(
+
+                db
+
+            )
+
+        )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -127,27 +116,23 @@ def get_chunk(
     db: Session = Depends(get_db)
 ):
     """
-    Fetch chunk by id.
+    Fetch chunk.
     """
 
     try:
 
-        chunk = db.query(
-            DocumentChunk
-        ).filter(
-            DocumentChunk.chunk_id
-            ==
-            chunk_id
-        ).first()
+        return (
 
-        if not chunk:
+            DocumentChunkService
+            .get_chunk(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Chunk not found"
+                chunk_id,
+
+                db
+
             )
 
-        return chunk
+        )
 
     except HTTPException:
 
@@ -156,8 +141,11 @@ def get_chunk(
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -169,31 +157,31 @@ def delete_chunk(
     db: Session = Depends(get_db)
 ):
     """
-    Delete document chunk.
+    Delete chunk.
     """
 
     try:
 
-        chunk = db.query(
-            DocumentChunk
-        ).filter(
-            DocumentChunk.chunk_id
-            ==
-            chunk_id
-        ).first()
+        chunk = (
 
-        if not chunk:
+            DocumentChunkService
+            .get_chunk(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Chunk not found"
+                chunk_id,
+
+                db
+
             )
 
-        db.delete(
-            chunk
         )
 
-        db.commit()
+        DocumentChunkService.delete_chunk(
+
+            chunk,
+
+            db
+
+        )
 
         return {
 
@@ -212,6 +200,9 @@ def delete_chunk(
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

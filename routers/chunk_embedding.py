@@ -9,17 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.chunk_embedding import (
-    ChunkEmbedding
-)
-
-from models.document_chunk import (
-    DocumentChunk
-)
-
 from schemas.chunk_embedding import (
     EmbeddingCreate,
     EmbeddingResponse
+)
+
+from services.chunk_embedding_service import (
+    ChunkEmbeddingService
 )
 
 
@@ -40,41 +36,15 @@ def create_embedding(
 ):
     """
     Create vector embedding
-    for a document chunk.
+    for document chunk.
     """
 
     try:
 
-        chunk = db.query(
-            DocumentChunk
-        ).filter(
-            DocumentChunk.chunk_id
-            ==
-            payload.chunk_id
-        ).first()
-
-        if not chunk:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Chunk not found"
-            )
-
-        embedding = ChunkEmbedding(
-            **payload.model_dump()
+        return ChunkEmbeddingService.create_embedding(
+            payload,
+            db
         )
-
-        db.add(
-            embedding
-        )
-
-        db.commit()
-
-        db.refresh(
-            embedding
-        )
-
-        return embedding
 
     except HTTPException:
 
@@ -105,11 +75,9 @@ def get_embeddings(
 
     try:
 
-        embeddings = db.query(
-            ChunkEmbedding
-        ).all()
-
-        return embeddings
+        return ChunkEmbeddingService.get_embeddings(
+            db
+        )
 
     except Exception as e:
 
@@ -129,27 +97,15 @@ def get_embedding(
 ):
     """
     Fetch embedding
-    using embedding id.
+    by embedding id.
     """
 
     try:
 
-        embedding = db.query(
-            ChunkEmbedding
-        ).filter(
-            ChunkEmbedding.embedding_id
-            ==
-            embedding_id
-        ).first()
-
-        if not embedding:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Embedding not found"
-            )
-
-        return embedding
+        return ChunkEmbeddingService.get_embedding(
+            embedding_id,
+            db
+        )
 
     except HTTPException:
 
@@ -177,26 +133,26 @@ def delete_embedding(
 
     try:
 
-        embedding = db.query(
-            ChunkEmbedding
-        ).filter(
-            ChunkEmbedding.embedding_id
-            ==
-            embedding_id
-        ).first()
+        embedding = (
 
-        if not embedding:
+            ChunkEmbeddingService
+            .get_embedding(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Embedding not found"
+                embedding_id,
+
+                db
+
             )
 
-        db.delete(
-            embedding
         )
 
-        db.commit()
+        ChunkEmbeddingService.delete_embedding(
+
+            embedding,
+
+            db
+
+        )
 
         return {
 
@@ -215,6 +171,9 @@ def delete_embedding(
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

@@ -9,21 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.document import (
-    Document
-)
-
-from models.upload_session import (
-    UploadSession
-)
-
-from models.insight import (
-    Insight
-)
-
 from schemas.insight import (
     InsightCreate,
     InsightResponse
+)
+
+from services.insight_service import (
+    InsightService
 )
 
 
@@ -48,65 +40,33 @@ def create_insight(
 
     try:
 
-        document = db.query(
-            Document
-        ).filter(
-            Document.doc_id
-            ==
-            payload.doc_id
-        ).first()
+        return (
 
-        if not document:
+            InsightService
+            .create_insight(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Document not found"
+                payload,
+
+                db
+
             )
 
-        session = db.query(
-            UploadSession
-        ).filter(
-            UploadSession.session_id
-            ==
-            payload.session_id
-        ).first()
-
-        if not session:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Session not found"
-            )
-
-        insight = Insight(
-            **payload.model_dump()
         )
-
-        db.add(
-            insight
-        )
-
-        db.commit()
-
-        db.refresh(
-            insight
-        )
-
-        return insight
-
 
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -125,15 +85,25 @@ def get_insights(
 
     try:
 
-        return db.query(
-            Insight
-        ).all()
+        return (
+
+            InsightService
+            .get_insights(
+
+                db
+
+            )
+
+        )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -149,22 +119,34 @@ def get_insight(
     Fetch insight.
     """
 
-    insight = db.query(
-        Insight
-    ).filter(
-        Insight.insight_id
-        ==
-        insight_id
-    ).first()
+    try:
 
-    if not insight:
+        return (
 
-        raise HTTPException(
-            status_code=404,
-            detail="Insight not found"
+            InsightService
+            .get_insight(
+
+                insight_id,
+
+                db
+
+            )
+
         )
 
-    return insight
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=str(e)
+
+        )
 
 
 @router.delete(
@@ -180,26 +162,26 @@ def delete_insight(
 
     try:
 
-        insight = db.query(
-            Insight
-        ).filter(
-            Insight.insight_id
-            ==
-            insight_id
-        ).first()
+        insight = (
 
-        if not insight:
+            InsightService
+            .get_insight(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Insight not found"
+                insight_id,
+
+                db
+
             )
 
-        db.delete(
-            insight
         )
 
-        db.commit()
+        InsightService.delete_insight(
+
+            insight,
+
+            db
+
+        )
 
         return {
 
@@ -209,17 +191,18 @@ def delete_insight(
 
         }
 
-
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

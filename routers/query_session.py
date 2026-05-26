@@ -9,17 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.upload_session import (
-    UploadSession
-)
-
-from models.query_session import (
-    QuerySession
-)
-
 from schemas.query_session import (
     QuerySessionCreate,
     QuerySessionResponse
+)
+
+from services.query_session_service import (
+    QuerySessionService
 )
 
 
@@ -44,50 +40,33 @@ def create_query_session(
 
     try:
 
-        upload_session = db.query(
-            UploadSession
-        ).filter(
-            UploadSession.session_id
-            ==
-            payload.upload_session_id
-        ).first()
+        return (
 
-        if not upload_session:
+            QuerySessionService
+            .create_session(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Upload session not found"
+                payload,
+
+                db
+
             )
 
-        query_session = QuerySession(
-            **payload.model_dump()
         )
-
-        db.add(
-            query_session
-        )
-
-        db.commit()
-
-        db.refresh(
-            query_session
-        )
-
-        return query_session
-
 
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -106,15 +85,25 @@ def get_query_sessions(
 
     try:
 
-        return db.query(
-            QuerySession
-        ).all()
+        return (
+
+            QuerySessionService
+            .get_sessions(
+
+                db
+
+            )
+
+        )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -130,22 +119,34 @@ def get_query_session(
     Fetch query session.
     """
 
-    query_session = db.query(
-        QuerySession
-    ).filter(
-        QuerySession.query_session_id
-        ==
-        query_session_id
-    ).first()
+    try:
 
-    if not query_session:
+        return (
 
-        raise HTTPException(
-            status_code=404,
-            detail="Query session not found"
+            QuerySessionService
+            .get_session(
+
+                query_session_id,
+
+                db
+
+            )
+
         )
 
-    return query_session
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=str(e)
+
+        )
 
 
 @router.delete(
@@ -161,26 +162,26 @@ def delete_query_session(
 
     try:
 
-        query_session = db.query(
-            QuerySession
-        ).filter(
-            QuerySession.query_session_id
-            ==
-            query_session_id
-        ).first()
+        query_session = (
 
-        if not query_session:
+            QuerySessionService
+            .get_session(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Query session not found"
+                query_session_id,
+
+                db
+
             )
 
-        db.delete(
-            query_session
         )
 
-        db.commit()
+        QuerySessionService.delete_session(
+
+            query_session,
+
+            db
+
+        )
 
         return {
 
@@ -190,17 +191,18 @@ def delete_query_session(
 
         }
 
-
     except HTTPException:
 
         raise
-
 
     except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

@@ -9,17 +9,13 @@ from uuid import UUID
 
 from db import get_db
 
-from models.document import (
-    Document
-)
-
-from models.document_summary import (
-    DocumentSummary
-)
-
 from schemas.document_summary import (
     SummaryCreate,
     SummaryResponse
+)
+
+from services.document_summary_service import (
+    DocumentSummaryService
 )
 
 
@@ -44,36 +40,18 @@ def create_summary(
 
     try:
 
-        document = db.query(
-            Document
-        ).filter(
-            Document.doc_id
-            ==
-            payload.doc_id
-        ).first()
+        return (
 
-        if not document:
+            DocumentSummaryService
+            .create_summary(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Document not found"
+                payload,
+
+                db
+
             )
 
-        summary = DocumentSummary(
-            **payload.model_dump()
         )
-
-        db.add(
-            summary
-        )
-
-        db.commit()
-
-        db.refresh(
-            summary
-        )
-
-        return summary
 
     except HTTPException:
 
@@ -84,8 +62,11 @@ def create_summary(
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -104,15 +85,25 @@ def get_summaries(
 
     try:
 
-        return db.query(
-            DocumentSummary
-        ).all()
+        return (
+
+            DocumentSummaryService
+            .get_summaries(
+
+                db
+
+            )
+
+        )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )
 
 
@@ -128,22 +119,34 @@ def get_summary(
     Fetch summary.
     """
 
-    summary = db.query(
-        DocumentSummary
-    ).filter(
-        DocumentSummary.summary_id
-        ==
-        summary_id
-    ).first()
+    try:
 
-    if not summary:
+        return (
 
-        raise HTTPException(
-            status_code=404,
-            detail="Summary not found"
+            DocumentSummaryService
+            .get_summary(
+
+                summary_id,
+
+                db
+
+            )
+
         )
 
-    return summary
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+
+            status_code=500,
+
+            detail=str(e)
+
+        )
 
 
 @router.delete(
@@ -159,26 +162,26 @@ def delete_summary(
 
     try:
 
-        summary = db.query(
-            DocumentSummary
-        ).filter(
-            DocumentSummary.summary_id
-            ==
-            summary_id
-        ).first()
+        summary = (
 
-        if not summary:
+            DocumentSummaryService
+            .get_summary(
 
-            raise HTTPException(
-                status_code=404,
-                detail="Summary not found"
+                summary_id,
+
+                db
+
             )
 
-        db.delete(
-            summary
         )
 
-        db.commit()
+        DocumentSummaryService.delete_summary(
+
+            summary,
+
+            db
+
+        )
 
         return {
 
@@ -197,6 +200,9 @@ def delete_summary(
         db.rollback()
 
         raise HTTPException(
+
             status_code=500,
+
             detail=str(e)
+
         )

@@ -7,12 +7,14 @@ from sqlalchemy.orm import Session
 
 from db import get_db
 
-from models.document import Document
-
 from schemas.document import (
     DocumentCreate,
     DocumentUpdate,
     DocumentResponse
+)
+
+from services.document_service import (
+    DocumentService
 )
 
 
@@ -37,31 +39,30 @@ def create_document(
 
     try:
 
-        document = Document(
-            **payload.model_dump()
+        return DocumentService.create_document(
+            payload,
+            db
         )
 
-        db.add(document)
+    except HTTPException:
 
-        db.commit()
+        raise
 
-        db.refresh(document)
-
-        return document
-
-    except Exception:
+    except Exception as e:
 
         db.rollback()
 
         raise HTTPException(
             status_code=500,
-            detail="Failed to create document"
+            detail=str(e)
         )
 
 
 @router.get(
     "/",
-    response_model=list[DocumentResponse]
+    response_model=list[
+        DocumentResponse
+    ]
 )
 def get_documents(
     db: Session = Depends(get_db)
@@ -70,9 +71,18 @@ def get_documents(
     Get all documents.
     """
 
-    return db.query(
-        Document
-    ).all()
+    try:
+
+        return DocumentService.get_documents(
+            db
+        )
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 
 @router.get(
@@ -87,20 +97,23 @@ def get_document(
     Fetch document by id.
     """
 
-    document = db.query(
-        Document
-    ).filter(
-        Document.doc_id == doc_id
-    ).first()
+    try:
 
-    if not document:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Document not found"
+        return DocumentService.get_document(
+            doc_id,
+            db
         )
 
-    return document
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 
 @router.put(
@@ -116,36 +129,31 @@ def update_document(
     Update document metadata.
     """
 
-    document = db.query(
-        Document
-    ).filter(
-        Document.doc_id == doc_id
-    ).first()
+    try:
 
-    if not document:
+        document = DocumentService.get_document(
+            doc_id,
+            db
+        )
+
+        return DocumentService.update_document(
+            document,
+            payload,
+            db
+        )
+
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        db.rollback()
 
         raise HTTPException(
-            status_code=404,
-            detail="Document not found"
+            status_code=500,
+            detail=str(e)
         )
-
-    updates = payload.model_dump(
-        exclude_unset=True
-    )
-
-    for key, value in updates.items():
-
-        setattr(
-            document,
-            key,
-            value
-        )
-
-    db.commit()
-
-    db.refresh(document)
-
-    return document
 
 
 @router.delete(
@@ -159,23 +167,35 @@ def delete_document(
     Delete document.
     """
 
-    document = db.query(
-        Document
-    ).filter(
-        Document.doc_id == doc_id
-    ).first()
+    try:
 
-    if not document:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Document not found"
+        document = DocumentService.get_document(
+            doc_id,
+            db
         )
 
-    db.delete(document)
+        DocumentService.delete_document(
+            document,
+            db
+        )
 
-    db.commit()
+        return {
 
-    return {
-        "message": "Deleted"
-    }
+            "message":
+
+            "Deleted"
+
+        }
+
+    except HTTPException:
+
+        raise
+
+    except Exception as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

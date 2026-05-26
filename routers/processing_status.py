@@ -5,44 +5,46 @@ from fastapi import status
 
 from sqlalchemy.orm import Session
 
+from uuid import UUID
+
 from db import get_db
 
-from schemas.upload_session import (
-    UploadSessionCreate,
-    UploadSessionResponse,
-    UploadSessionUpdate
+from schemas.processing_status import (
+    ProcessingStatusCreate,
+    ProcessingStatusUpdate,
+    ProcessingStatusResponse
 )
 
-from services.upload_session_service import (
-    UploadSessionService
+from services.processing_status_service import (
+    ProcessingStatusService
 )
 
 
 router = APIRouter(
-    prefix="/sessions",
-    tags=["UploadSession"]
+    prefix="/processing-status",
+    tags=["Processing Status"]
 )
 
 
 @router.post(
     "/",
-    response_model=UploadSessionResponse,
+    response_model=ProcessingStatusResponse,
     status_code=status.HTTP_201_CREATED
 )
-def create_session(
-    payload: UploadSessionCreate,
+def create_status(
+    payload: ProcessingStatusCreate,
     db: Session = Depends(get_db)
 ):
     """
-    Create upload session.
+    Create processing status.
     """
 
     try:
 
         return (
 
-            UploadSessionService
-            .create_session(
+            ProcessingStatusService
+            .create_status(
 
                 payload,
 
@@ -72,22 +74,22 @@ def create_session(
 @router.get(
     "/",
     response_model=list[
-        UploadSessionResponse
+        ProcessingStatusResponse
     ]
 )
-def get_sessions(
+def get_statuses(
     db: Session = Depends(get_db)
 ):
     """
-    Fetch sessions.
+    Fetch statuses.
     """
 
     try:
 
         return (
 
-            UploadSessionService
-            .get_sessions(
+            ProcessingStatusService
+            .get_statuses(
 
                 db
 
@@ -107,25 +109,25 @@ def get_sessions(
 
 
 @router.get(
-    "/{session_id}",
-    response_model=UploadSessionResponse
+    "/{doc_id}",
+    response_model=ProcessingStatusResponse
 )
-def get_session(
-    session_id: str,
+def get_status(
+    doc_id: UUID,
     db: Session = Depends(get_db)
 ):
     """
-    Fetch upload session.
+    Fetch document status.
     """
 
     try:
 
         return (
 
-            UploadSessionService
-            .get_session(
+            ProcessingStatusService
+            .get_status(
 
-                session_id,
+                doc_id,
 
                 db
 
@@ -149,26 +151,26 @@ def get_session(
 
 
 @router.put(
-    "/{session_id}",
-    response_model=UploadSessionResponse
+    "/{doc_id}",
+    response_model=ProcessingStatusResponse
 )
-def update_session(
-    session_id: str,
-    payload: UploadSessionUpdate,
+def update_status(
+    doc_id: UUID,
+    payload: ProcessingStatusUpdate,
     db: Session = Depends(get_db)
 ):
     """
-    Update upload session.
+    Update processing status.
     """
 
     try:
 
-        session = (
+        status_obj = (
 
-            UploadSessionService
-            .get_session(
+            ProcessingStatusService
+            .get_status(
 
-                session_id,
+                doc_id,
 
                 db
 
@@ -178,10 +180,10 @@ def update_session(
 
         return (
 
-            UploadSessionService
-            .update_session(
+            ProcessingStatusService
+            .update_status(
 
-                session,
+                status_obj,
 
                 payload,
 
@@ -209,24 +211,24 @@ def update_session(
 
 
 @router.delete(
-    "/{session_id}"
+    "/{doc_id}"
 )
-def delete_session(
-    session_id: str,
+def delete_status(
+    doc_id: UUID,
     db: Session = Depends(get_db)
 ):
     """
-    Delete upload session.
+    Delete processing status.
     """
 
     try:
 
-        session = (
+        status_obj = (
 
-            UploadSessionService
-            .get_session(
+            ProcessingStatusService
+            .get_status(
 
-                session_id,
+                doc_id,
 
                 db
 
@@ -234,9 +236,9 @@ def delete_session(
 
         )
 
-        UploadSessionService.delete_session(
+        ProcessingStatusService.delete_status(
 
-            session,
+            status_obj,
 
             db
 

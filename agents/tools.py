@@ -1,13 +1,37 @@
 from agno.tools import tool
 
-from tools.comparison_tool import (
+from services.comparison_service import (
     ComparisonService
+)
+
+from services.table_extraction_service import (
+    TableExtractionService
 )
 
 
 comparison_service = (
     ComparisonService()
 )
+
+table_service = (
+    TableExtractionService()
+)
+
+
+@tool
+def extract_tables(
+    pdf_path: str
+):
+    """
+    Extract tables from financial PDF.
+    """
+
+    return (
+
+        table_service
+        .extract_tables(pdf_path)
+
+    )
 
 
 @tool

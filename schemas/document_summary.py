@@ -27,6 +27,8 @@ ALLOWED_MODELS = {
     "gemini-2.5-flash",
 
     "deepseek-r1"
+
+    "nvidia-nim"
 }
 
 

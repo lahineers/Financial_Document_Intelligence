@@ -36,6 +36,12 @@ from routers.dashboard_metric import router as dashboard_router
 from routers.report import router as report_router
 from routers.saved_query import router as saved_query_router
 
+from routers.agent_router import (
+    router as agent_router
+)
+
+
+
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
@@ -79,6 +85,12 @@ app.include_router(
 )
 app.include_router(
     saved_query_router
+)
+app.include_router(
+    agent_router
+)
+app.include_router(
+    agent_router
 )
 
 

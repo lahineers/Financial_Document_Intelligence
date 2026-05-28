@@ -40,6 +40,8 @@ ALLOWED_MODELS = {
 
     "deepseek-r1"
 
+    "nvidia-nim"
+
 }
 
 
